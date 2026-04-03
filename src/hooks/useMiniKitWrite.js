@@ -9,16 +9,18 @@ function isUserRejection(err) {
   if (err.code === 4001) return true;
   const msg = (err?.message || "").toLowerCase();
   return (
-    msg.includes("user rejected the request") ||
-    msg.includes("user denied transaction") ||
+    msg.includes("user rejected") ||
+    msg.includes("user denied") ||
     msg.includes("rejected by user") ||
-    msg.includes("user rejected")
+    msg.includes("declined")
   );
 }
 
 function toHex(value) {
-  if (value === undefined || value === null) return undefined;
-  return `0x${BigInt(value).toString(16)}`;
+  if (value === undefined || value === null) return "0x0";
+  const bn = BigInt(value.toString());
+  if (bn === 0n) return "0x0";
+  return `0x${bn.toString(16)}`;
 }
 
 export function useMiniKitWrite() {
@@ -60,14 +62,14 @@ export function useMiniKitWrite() {
 
     let hash;
     try {
-      const data = encodeFunctionData({ abi, functionName, args });
+      const callData = encodeFunctionData({ abi, functionName, args });
       const from = walletClient.account?.address;
 
       const txParams = {
         from,
         to: address,
-        data,
-        ...(value !== undefined ? { value: toHex(value) } : {}),
+        data: callData,
+        value: toHex(value),
       };
 
       hash = await walletClient.request({
@@ -84,8 +86,8 @@ export function useMiniKitWrite() {
       if (isUserRejection(err)) {
         toast("Transacción rechazada en World App.", "warning", 5000);
       } else {
-        const msg = err?.shortMessage || err?.message || "Error al enviar la transacción.";
-        toast(`Error: ${msg}`, "error", 8000);
+        const raw = err?.shortMessage || err?.message || "Error al enviar.";
+        toast(`Error: ${raw}`, "error", 8000);
       }
       throw err;
     }
@@ -104,7 +106,7 @@ export function useMiniKitWrite() {
       } catch {
         setIsSuccess(true);
         toast(
-          `Transacción enviada a World App. Verifica en: https://worldscan.org/tx/${hash}`,
+          `Enviada. Verifica en Worldscan: https://worldscan.org/tx/${hash}`,
           "warning",
           12000,
         );

@@ -72,13 +72,14 @@ function TxMsg({ msg }) {
   return <div className={`staking-msg ${cls}`}>{msg}</div>;
 }
 
-function ApproveBtn({ tokenAddress, spender, label, onDone }) {
+function ApproveBtn({ tokenAddress, spender, label, onDone, approved = false, noAmount = false }) {
   const { writeContractAsync, isPending } = useMiniKitWrite();
   const [hash, setHash] = useState(null);
   const { isLoading } = useWaitForTransactionReceipt({ hash });
   const [msg, setMsg] = useState("");
 
   const handleApprove = async () => {
+    if (approved) return;
     setMsg("⏳ Enviando aprobación...");
     try {
       const tx = await writeContractAsync({
@@ -99,11 +100,23 @@ function ApproveBtn({ tokenAddress, spender, label, onDone }) {
     } catch (e) { setMsg(parseErr(e)); }
   };
 
+  const busy = isPending || isLoading;
+  const btnLabel = approved
+    ? "✅ Aprobado"
+    : busy
+    ? "⏳ Aprobando..."
+    : label || "1. Aprobar Token";
+
   return (
     <div>
       {msg && <TxMsg msg={msg} />}
-      <button className="btn-primary staking-btn" onClick={handleApprove} disabled={isPending || isLoading}>
-        {isPending || isLoading ? "⏳ Aprobando..." : label || "Aprobar Token"}
+      <button
+        className={`staking-btn ${approved ? "btn-secondary" : "btn-primary"}`}
+        onClick={handleApprove}
+        disabled={busy || approved || noAmount}
+        style={approved ? { opacity: 0.7, cursor: "default" } : {}}
+      >
+        {btnLabel}
       </button>
     </div>
   );
