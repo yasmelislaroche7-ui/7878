@@ -36,10 +36,11 @@ function aprBpsToDisplay(bps) {
 }
 
 function parseErr(e) {
+  if (e?.message === "user_cancelled") return "";
   const msg = e?.shortMessage || e?.message || String(e);
   const low = msg.toLowerCase();
-  if (low.includes("user rejected") || low.includes("rejected the request") || low.includes("denied transaction"))
-    return "❌ Transacción rechazada por el usuario";
+  if (e?.code === 4001 || low.includes("user rejected the request") || low.includes("user denied transaction") || low.includes("rejected by user"))
+    return "❌ Transacción rechazada en World App";
   if (low.includes("insufficient funds") || low.includes("insufficient balance"))
     return "❌ ETH insuficiente para pagar el gas en World Chain";
   if (low.includes("max fee per gas less than block base fee") || low.includes("maxfeepergas too low") || low.includes("fee too low"))

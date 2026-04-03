@@ -1,14 +1,18 @@
 import { useState, useCallback } from "react";
 import { useWalletClient, usePublicClient } from "wagmi";
-import { parseGwei } from "viem";
 import { toast } from "../context/ToastContext.jsx";
 import { useTxConfirm } from "../context/TxConfirmContext.jsx";
 
-const DEFAULT_GAS = {
-  gas:                  700_000n,
-  maxFeePerGas:         parseGwei("0.001"),
-  maxPriorityFeePerGas: parseGwei("0.001"),
-};
+function isUserRejection(err) {
+  if (!err) return false;
+  if (err.code === 4001) return true;
+  const msg = (err?.message || "").toLowerCase();
+  return (
+    msg.includes("user rejected the request") ||
+    msg.includes("user denied transaction") ||
+    msg.includes("rejected by user")
+  );
+}
 
 export function useMiniKitWrite() {
   const { data: walletClient } = useWalletClient();
@@ -28,9 +32,6 @@ export function useMiniKitWrite() {
     args = [],
     value,
     txMeta,
-    gas,
-    maxFeePerGas,
-    maxPriorityFeePerGas,
   }) => {
     if (!walletClient) {
       const msg = "Conecta tu wallet de World App primero.";
@@ -41,7 +42,6 @@ export function useMiniKitWrite() {
     if (txMeta) {
       const confirmed = await confirmTx(txMeta);
       if (!confirmed) {
-        toast("Transacción cancelada.", "info", 3000);
         throw new Error("user_cancelled");
       }
     }
@@ -51,12 +51,6 @@ export function useMiniKitWrite() {
     setError(null);
     setData(undefined);
 
-    const gasParams = {
-      gas:                  gas                  ?? DEFAULT_GAS.gas,
-      maxFeePerGas:         maxFeePerGas         ?? DEFAULT_GAS.maxFeePerGas,
-      maxPriorityFeePerGas: maxPriorityFeePerGas ?? DEFAULT_GAS.maxPriorityFeePerGas,
-    };
-
     let hash;
     try {
       hash = await walletClient.writeContract({
@@ -65,30 +59,20 @@ export function useMiniKitWrite() {
         functionName,
         args,
         ...(value !== undefined ? { value } : {}),
-        ...gasParams,
       });
 
       setData(hash);
-      toast("Transacción enviada. Esperando confirmación...", "info", 5000);
+      toast("Transacción enviada. Esperando confirmación...", "info", 6000);
     } catch (err) {
       setIsPending(false);
-
-      const errMsg = err?.message || "";
-      const errLow = errMsg.toLowerCase();
-
-      const isCancel =
-        err?.code === 4001 ||
-        errLow.includes("user rejected") ||
-        errLow.includes("user denied") ||
-        errLow.includes("rejected the request") ||
-        (errLow.includes("cancelled") && !errLow.includes("hash"));
-
-      const msg = isCancel
-        ? "Transacción cancelada por el usuario."
-        : err?.shortMessage || errMsg || "Error al enviar la transacción.";
-
       setError(err);
-      toast(msg, isCancel ? "warning" : "error", 5000);
+
+      if (isUserRejection(err)) {
+        toast("Transacción rechazada en World App.", "warning", 5000);
+      } else {
+        const msg = err?.shortMessage || err?.message || "Error al enviar la transacción.";
+        toast(`Error: ${msg}`, "error", 7000);
+      }
       throw err;
     }
 
@@ -98,17 +82,16 @@ export function useMiniKitWrite() {
         await publicClient.waitForTransactionReceipt({
           hash,
           confirmations: 1,
-          timeout: 90_000,
+          timeout: 120_000,
           pollingInterval: 2_000,
         });
         setIsSuccess(true);
-        toast("¡Transacción confirmada!", "success", 4000);
+        toast("¡Transacción confirmada exitosamente!", "success", 5000);
       } catch (waitErr) {
-        const txUrl = `https://worldscan.org/tx/${hash}`;
         toast(
-          `Transacción enviada. Puedes verificarla en Worldscan: ${txUrl}`,
+          `Transacción enviada. Verifica en Worldscan: https://worldscan.org/tx/${hash}`,
           "warning",
-          10000,
+          12000,
         );
       } finally {
         setIsConfirming(false);
