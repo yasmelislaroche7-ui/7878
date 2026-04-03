@@ -19,10 +19,12 @@ export const wagmiConfig = createConfig({
   transports: {
     [worldchain.id]: http("https://worldchain-mainnet.g.alchemy.com/v2/bVo646pb8L7_W_nahCoqW", {
       batch: true,
-      retryCount: 3,
+      retryCount: 5,
+      retryDelay: 2000,
+      timeout: 30_000,
     }),
   },
   connectors: [worldApp("World App")],
-  pollingInterval: 4000,
+  pollingInterval: 2000,
   syncConnectedChain: true,
 });

@@ -4,7 +4,7 @@ import {
 } from "wagmi";
 import { useWallet } from "../context/WalletContext.jsx";
 import { useMiniKitWrite } from "../hooks/useMiniKitWrite.js";
-import { formatUnits, parseUnits, parseGwei, getAddress } from "viem";
+import { formatUnits, parseUnits, getAddress } from "viem";
 import { ACUA_STAKING_ADDRESS, STAKING_ABI, ERC20_ABI } from "../config/staking.js";
 import { SUSHI_TOKEN_ADDRESS, SUSHI_STAKING_ADDRESS, SUSHI_TOKEN_ABI, SUSHI_STAKING_ABI } from "../config/sushi.js";
 import { TIME_TOKEN_ADDRESS, TIME_TOKEN_ABI, TIME_STAKING_ADDRESS, TIME_STAKING_ABI, WLD_TOKEN_ADDRESS } from "../config/time.js";
@@ -20,11 +20,6 @@ import "../styles/StakingPanel.css";
 const MAXUINT256 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
 const ZERO_ADDR  = getAddress("0x0000000000000000000000000000000000000000");
 
-const GAS = {
-  gas:                  700_000n,
-  maxFeePerGas:         parseGwei("0.003"),
-  maxPriorityFeePerGas: parseGwei("0.001"),
-};
 
 function fmt(val, dec = 18, dp = 4) {
   if (val === undefined || val === null) return "—";
