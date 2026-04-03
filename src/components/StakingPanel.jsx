@@ -79,7 +79,7 @@ function ApproveBtn({ tokenAddress, spender, label, onDone }) {
   const [msg, setMsg] = useState("");
 
   const handleApprove = async () => {
-    setMsg("Aprobando token...");
+    setMsg("⏳ Enviando aprobación...");
     try {
       const tx = await writeContractAsync({
         address: tokenAddress,
@@ -93,8 +93,9 @@ function ApproveBtn({ tokenAddress, spender, label, onDone }) {
         },
       });
       setHash(tx);
-      setMsg("✅ Aprobación enviada, esperando confirmación...");
-      if (onDone) setTimeout(() => { onDone(); setMsg(""); }, 5000);
+      setMsg("✅ Aprobación confirmada. ¡Ya puedes depositar!");
+      if (onDone) onDone();
+      setTimeout(() => setMsg(""), 4000);
     } catch (e) { setMsg(parseErr(e)); }
   };
 
@@ -151,8 +152,9 @@ function AcuaStakingCard() {
     try {
       const tx = await fn();
       setHash(tx);
-      setMsg("⏳ Transacción enviada, esperando confirmación...");
-      setTimeout(() => { refetchAll(); setMsg(""); }, 6000);
+      setMsg("✅ ¡Transacción confirmada!");
+      refetchAll();
+      setTimeout(() => setMsg(""), 4000);
     } catch (e) { setMsg(parseErr(e)); }
   };
 
@@ -274,8 +276,9 @@ function TimeStakingCard() {
     try {
       const tx = await fn();
       setHash(tx);
-      setMsg("⏳ Transacción enviada, esperando confirmación...");
-      setTimeout(() => { refetchAll(); setMsg(""); }, 6000);
+      setMsg("✅ ¡Transacción confirmada!");
+      refetchAll();
+      setTimeout(() => setMsg(""), 4000);
     } catch (e) { setMsg(parseErr(e)); }
   };
 
@@ -400,8 +403,9 @@ function SushiStakingCard() {
     try {
       const tx = await fn();
       setHash(tx);
-      setMsg("⏳ Transacción enviada, esperando confirmación...");
-      setTimeout(() => { refetchAll(); setMsg(""); }, 6000);
+      setMsg("✅ ¡Transacción confirmada!");
+      refetchAll();
+      setTimeout(() => setMsg(""), 4000);
     } catch (e) { setMsg(parseErr(e)); }
   };
 
@@ -541,8 +545,9 @@ function AirStakingCard() {
     try {
       const tx = await fn();
       setHash(tx);
-      setMsg("⏳ Transacción enviada, esperando confirmación...");
-      setTimeout(() => { refetchAll(); setMsg(""); }, 6000);
+      setMsg("✅ ¡Transacción confirmada!");
+      refetchAll();
+      setTimeout(() => setMsg(""), 4000);
     } catch (e) { setMsg(parseErr(e)); }
   };
 
@@ -719,8 +724,9 @@ function GenericStakingCard({ name, label, labelClass, tokenAddress, tokenAbi, s
     try {
       const tx = await fn();
       setHash(tx);
-      setMsg("⏳ Transacción enviada, esperando confirmación...");
-      setTimeout(() => { refetchAll(); setMsg(""); }, 6000);
+      setMsg("✅ ¡Transacción confirmada!");
+      refetchAll();
+      setTimeout(() => setMsg(""), 4000);
     } catch (e) { setMsg(parseErr(e)); }
   };
 
