@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useWalletClient, usePublicClient } from "wagmi";
+import { encodeFunctionData } from "viem";
 import { toast } from "../context/ToastContext.jsx";
 import { useTxConfirm } from "../context/TxConfirmContext.jsx";
 
@@ -10,8 +11,14 @@ function isUserRejection(err) {
   return (
     msg.includes("user rejected the request") ||
     msg.includes("user denied transaction") ||
-    msg.includes("rejected by user")
+    msg.includes("rejected by user") ||
+    msg.includes("user rejected")
   );
+}
+
+function toHex(value) {
+  if (value === undefined || value === null) return undefined;
+  return `0x${BigInt(value).toString(16)}`;
 }
 
 export function useMiniKitWrite() {
@@ -53,12 +60,19 @@ export function useMiniKitWrite() {
 
     let hash;
     try {
-      hash = await walletClient.writeContract({
-        address,
-        abi,
-        functionName,
-        args,
-        ...(value !== undefined ? { value } : {}),
+      const data = encodeFunctionData({ abi, functionName, args });
+      const from = walletClient.account?.address;
+
+      const txParams = {
+        from,
+        to: address,
+        data,
+        ...(value !== undefined ? { value: toHex(value) } : {}),
+      };
+
+      hash = await walletClient.request({
+        method: "eth_sendTransaction",
+        params: [txParams],
       });
 
       setData(hash);
@@ -71,7 +85,7 @@ export function useMiniKitWrite() {
         toast("Transacción rechazada en World App.", "warning", 5000);
       } else {
         const msg = err?.shortMessage || err?.message || "Error al enviar la transacción.";
-        toast(`Error: ${msg}`, "error", 7000);
+        toast(`Error: ${msg}`, "error", 8000);
       }
       throw err;
     }
@@ -87,9 +101,10 @@ export function useMiniKitWrite() {
         });
         setIsSuccess(true);
         toast("¡Transacción confirmada exitosamente!", "success", 5000);
-      } catch (waitErr) {
+      } catch {
+        setIsSuccess(true);
         toast(
-          `Transacción enviada. Verifica en Worldscan: https://worldscan.org/tx/${hash}`,
+          `Transacción enviada a World App. Verifica en: https://worldscan.org/tx/${hash}`,
           "warning",
           12000,
         );
